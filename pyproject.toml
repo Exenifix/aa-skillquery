@@ -1,77 +1,72 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
 [project]
-name = "allianceauth-example-plugin"
-dynamic = ["version", "description"]
-readme = "README.md"
-license = {file = "LICENSE"}
-requires-python = ">=3.8"
+name = "skillquery"
+version = "0.1.0"
+description = ""
 authors = [
-    { name = "John Doe", email = "john.doe@example.com" },
+    {name = "Exenifix"}
 ]
-classifiers = [
-    "Environment :: Web Environment",
-    "Framework :: Django",
-    "Framework :: Django :: 4.0",
-    "Framework :: Django :: 4.2",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Topic :: Internet :: WWW/HTTP",
-    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-]
+license = {text = "MIT"}
+requires-python = ">=3.11,<4.0"
 dependencies = [
-    "allianceauth>=3",
+    "allianceauth>=4.7.0",
+    "aa-memberaudit>=3.15.0",
 ]
 
-
-[project.urls]
-Homepage = "https://gitlab.com/ErikKalkoken/allianceauth-example-plugin"
-Documentation = "https://allianceauth-example-plugin.readthedocs.io/en/latest/"
-Source = "https://gitlab.com/ErikKalkoken/allianceauth-example-plugin"
-Changelog = "https://gitlab.com/ErikKalkoken/allianceauth-example-plugin/-/blob/master/CHANGELOG.md"
-Tracker = "https://gitlab.com/ErikKalkoken/allianceauth-example-plugin/-/issues"
-
-[tool.flit.module]
-name = "example"
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-sections = [
-    "FUTURE",
-    "STDLIB",
-    "THIRDPARTY",
-    "DJANGO",
-    "ALLIANCEAUTH",
-    "FIRSTPARTY",
-    "LOCALFOLDER"
+[tool.poetry]
+packages = [
+    {include = "skillquery"}
 ]
-known_allianceauth = ["allianceauth", "app_utils"]
-known_django = ["django", "django_webtest", "esi", "eveuniverse"]
 
-[tool.pylint.'MASTER']
-ignore-patterns = ["__init__.py", "auth_hooks.py", "apps.py", "admin.py"]
-ignore-paths = ["^.*/tests/.*$", "^.*/migrations/.*$"]
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+ruff = "^0.11.13"
+pre-commit = "^4.2.0"
+djlint = "^1.36.4"
 
-[tool.pylint.'BASIC']
-good-names = ["i", "j", "k", "ex"]
+[tool.djlint]
+profile = "django"
 
-[tool.pylint.'FORMAT']
-max-line-length = 120
+[tool.black]
+line-length = 120
+target-version = ["py313"]
+extend-exclude = "migrations"
 
-[tool.pylint.'MESSAGES CONTROL']
-disable = [
-    "cyclic-import",
-    "fixme",
-    "import-outside-toplevel",
-    "imported-auth-user",
-    "too-few-public-methods",
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+exclude = [
+    "migrations"
 ]
+
+[tool.ruff.lint]
+select = [
+    "F",
+    "E",
+    "W",
+    "I",
+    "N",
+    "UP",
+    "B",
+    "ASYNC",
+    "C4",
+    "PIE",
+    "T20",
+    "Q",
+    "RET",
+    "SIM",
+    "ARG",
+    "PTH",
+    "RUF"
+]
+ignore = [
+    "PIE796",
+    "B028",
+    "RUF018",
+    "N818",
+    "B905",
+    "RUF012"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

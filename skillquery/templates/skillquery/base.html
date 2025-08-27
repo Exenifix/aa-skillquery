@@ -1,0 +1,37 @@
+{% extends 'allianceauth/base-bs5.html' %}
+{% load i18n %}
+{% load navactive %}
+{% block page_title %}
+    {% translate "Skillquery" %}
+{% endblock %}
+{% block content %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container-fluid">
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#skillqueryNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="skillqueryNavbar">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link {% navactive request 'skillquery:skill' %}"
+                           href="{% url 'skillquery:skill' %}">
+                            <i class="fas fa-solid fa-circle-info me-1"></i> Skill
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% navactive request 'skillquery:skillset' %}"
+                           href="{% url 'skillquery:skillset' %}">
+                            <i class="fas fa-solid fa-circle-info me-1"></i> Skillset
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div>
+        {% block details %}{% endblock %}
+    </div>
+{% endblock %}

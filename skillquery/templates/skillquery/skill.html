@@ -1,0 +1,307 @@
+{% extends 'skillquery/base.html' %}
+{% load i18n %}
+{% load humanize %}
+{% load django_bootstrap5 %}
+{% block extra_css %}
+    <style>
+    .skill-graph {
+        background-color: #2c3e50;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .graph-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .bar-label {
+        width: 150px;
+        color: #ecf0f1;
+        font-weight: bold;
+    }
+    .bar-container {
+        flex-grow: 1;
+        background-color: #34495e;
+        height: 30px;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .bar-fill {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+        color: white;
+        font-weight: bold;
+        min-width: 30px;
+    }
+    .color-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-right: 15px;
+    }
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+        margin-right: 5px;
+    }
+    .form-row {
+        display: flex;
+        margin-bottom: 15px;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    .autocomplete-container {
+        position: relative;
+        flex-grow: 1;
+    }
+    .autocomplete-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-top: none;
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .autocomplete-result {
+        padding: 8px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    .autocomplete-result:hover {
+        background-color: #f5f5f5;
+    }
+    .btn-add-row {
+        margin-bottom: 15px;
+    }
+    </style>
+{% endblock %}
+{% block details %}
+    <div class="container-fluid">
+        {% if statistics %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3>{% trans "Skill Statistics" %}</h3>
+                    <div class="skill-graph">
+                        <canvas id="skillChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-12">
+                <h3>{% trans "Skill Search" %}</h3>
+                <form method="post" id="skill-form">
+                    {% csrf_token %}
+                    <div id="form-container">
+                        {% for form in forms %}
+                            <div class="form-row">
+                                <div class="autocomplete-container">
+                                    <input type="text"
+                                           class="form-control skill-name"
+                                           name="skill_name"
+                                           placeholder="{% trans 'Enter skill name' %}"
+                                           value="{{ form.skill_name.value|default:'' }}"
+                                           data-skill-id="{{ form.skill_id.value|default:'' }}">
+                                    <div class="autocomplete-results" style="display: none;"></div>
+                                </div>
+                                <input type="hidden"
+                                       class="skill-id"
+                                       name="skill_ids"
+                                       value="{{ form.skill_id.value|default:'' }}">
+                                <button type="button"
+                                        class="btn btn-danger btn-remove-row"
+                                        {% if forloop.first %}style="visibility: hidden;"{% endif %}>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% empty %}
+                            <div class="form-row">
+                                <div class="autocomplete-container">
+                                    <input type="text"
+                                           class="form-control skill-name"
+                                           name="skill_name"
+                                           placeholder="{% trans 'Enter skill name' %}">
+                                    <div class="autocomplete-results" style="display: none;"></div>
+                                </div>
+                                <input type="hidden" class="skill-id" name="skill_ids" value="">
+                                <button type="button"
+                                        class="btn btn-danger btn-remove-row"
+                                        style="visibility: hidden">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="cumulative"
+                               id="cumulative"
+                               {% if request.POST.cumulative %}checked{% endif %}>
+                        <label class="form-check-label" for="cumulative">{% trans "Cumulative" %}</label>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-add-row mb-3">
+                        <i class="fas fa-plus"></i> {% trans "Add another skill" %}
+                    </button>
+                    <div>
+                        <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block extra_javascript %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    {% if statistics %}
+    const data = {{ statistics|safe }};
+    const skillLabels = Object.keys(data);
+    const skillData = Object.values(data);
+
+    // Transpose statistics: we want per-level arrays
+    const levels = [1,2,3,4,5];
+    const datasets = levels.map((level, idx) => {
+        return {
+            label: `{{ _("Level") }} ${level}`,
+            data: skillData.map(skillLevels => skillLevels[idx]),
+            backgroundColor: `hsl(${idx*60}, 70%, 60%)`
+        };
+    });
+
+    new Chart(document.getElementById("skillChart"), {
+        type: 'bar',
+        data: {
+            labels: skillLabels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ecf0f1'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#ecf0f1' },
+                    stacked: false
+                },
+                y: {
+                    ticks: { color: '#ecf0f1' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+    </script>
+    <script>
+    $(document).ready(function() {
+        // Add new skill row
+        $('.btn-add-row').click(function() {
+            const newRow = $('.form-row:first').clone();
+            newRow.find('.skill-name').val('').removeAttr('data-skill-id');
+            newRow.find('.skill-id').val('');
+            newRow.find('.autocomplete-results').hide().empty();
+            newRow.find('.btn-remove-row').css('visibility', 'visible');
+            $('#form-container').append(newRow);
+            initAutocomplete(newRow.find('.skill-name'));
+        });
+
+        // Remove skill row
+        $(document).on('click', '.btn-remove-row', function() {
+            if ($('.form-row').length > 1) {
+                $(this).closest('.form-row').remove();
+            }
+        });
+
+        // Initialize autocomplete for existing inputs
+        $('.skill-name').each(function() {
+            initAutocomplete($(this));
+        });
+
+        function initAutocomplete(input) {
+    input.on('input', function() {
+        const query = $(this).val();
+        const resultsContainer = $(this).siblings('.autocomplete-results');
+
+        if (query.length < 2) {
+            resultsContainer.hide().empty();
+            return;
+        }
+
+        // Fetch autocomplete results from backend
+        $.get('{% url "skillquery:api_skill_autocomplete" %}', {q: query}, function(data) {
+            resultsContainer.empty();
+
+            if (data.length > 0) {
+                $.each(data, function(index, skill) {
+                    $('<div class="autocomplete-result">')
+                        .text(skill.name)
+                        .attr('data-skill-id', skill.id)
+                        .appendTo(resultsContainer)
+                        .on('click', function() {
+                            // This handler is bound per result, so it only affects THIS row
+                            input.val(skill.name).attr('data-skill-id', skill.id);
+                            resultsContainer.hide().empty();
+                            input.closest('.form-row').find('.skill-id').val(skill.id);
+                        });
+                });
+                resultsContainer.show();
+            } else {
+                resultsContainer.hide();
+            }
+        });
+    });
+
+    // Hide autocomplete when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.autocomplete-container').length) {
+            $('.autocomplete-results').hide();
+        }
+    });
+}
+
+        // Form validation before submit
+        $('#skill-form').on('submit', function() {
+            let valid = true;
+
+            $('.form-row').each(function() {
+                const skillName = $(this).find('.skill-name');
+                const skillId = $(this).find('.skill-id');
+
+                if (skillName.val() && !skillId.val()) {
+                    valid = false;
+                    skillName.addClass('is-invalid');
+                } else {
+                    skillName.removeClass('is-invalid');
+                }
+            });
+
+            if (!valid) {
+                alert('{% trans "Please select a valid skill from the autocomplete suggestions for all entered skills." %}');
+                return false;
+            }
+
+            return true;
+        });
+    });
+    </script>
+{% endblock %}
