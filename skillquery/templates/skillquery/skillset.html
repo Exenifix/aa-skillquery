@@ -27,13 +27,14 @@
         position: relative;
         flex-grow: 1;
     }
-    .autocomplete-results {
+        .autocomplete-results {
         position: absolute;
         top: 100%;
         left: 0;
         right: 0;
-        background: white;
+        background: var(--bs-body-bg);
         border: 1px solid #ccc;
+        border-radius: 10px;
         border-top: none;
         z-index: 1000;
         max-height: 200px;
@@ -45,7 +46,7 @@
         border-bottom: 1px solid #eee;
     }
     .autocomplete-result:hover {
-        background-color: #f5f5f5;
+        background-color: var(--bs-primary);
     }
     .level-input {
         width: 100px;
